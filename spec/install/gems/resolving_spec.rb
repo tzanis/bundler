@@ -103,8 +103,8 @@ describe "bundle install with gem sources" do
       end
     end
 
-    describe "when some gems require a different version of ruby" do
-      it "does not try to install those gems" do
+    describe "when a gem requires a different version of ruby" do
+      it "raises an error during resolution" do
         update_repo gem_repo1 do
           build_gem "require_ruby" do |s|
             s.required_ruby_version = "> 9000"
@@ -112,12 +112,23 @@ describe "bundle install with gem sources" do
         end
 
         install_gemfile <<-G, :artifice => "compact_index"
+          ruby "#{RUBY_VERSION}"
           source "file://#{gem_repo1}"
           gem 'require_ruby'
         G
 
         expect(out).to_not include("Gem::InstallError: require_ruby requires Ruby version > 9000")
-        expect(out).to include("require_ruby-1.0 requires ruby version > 9000, which is incompatible with the current version, #{Bundler::RubyVersion.system}")
+        nice_error = <<-E.strip.gsub(/^ {8}/, "")
+          Fetching source index from file:#{gem_repo1}/
+          Resolving dependencies...
+          Bundler could not find compatible versions for gem "require_ruby":
+            In Gemfile:
+              ruby (= #{RUBY_VERSION})
+
+              require_ruby was resolved to 1.0, which depends on
+                ruby (> 9000)
+        E
+        expect(out).to eq(nice_error)
       end
     end
 
