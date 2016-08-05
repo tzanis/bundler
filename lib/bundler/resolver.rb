@@ -69,7 +69,7 @@ module Bundler
     class SpecGroup < Array
       include GemHelpers
 
-      attr_reader :activated, :required_by
+      attr_reader :activated
 
       def initialize(a)
         super
@@ -84,8 +84,7 @@ module Bundler
 
       def initialize_copy(o)
         super
-        @required_by = o.required_by.dup
-        @activated   = o.activated.dup
+        @activated = o.activated.dup
       end
 
       def to_specs
